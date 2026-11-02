@@ -31,6 +31,7 @@ const makeupInspirationFocus = ref(0)
 const makeupInsightFocus = ref(0)
 const language = ref(localStorage.getItem('style-language') || 'zh')
 const expandedMakeupCategory = ref('')
+const catalogPage = ref(1)
 const cartOpen = ref(false)
 const cartItems = ref(JSON.parse(localStorage.getItem('style-cart') || '[]'))
 const contactMode = ref('email')
@@ -223,6 +224,7 @@ const navigateTo = (url) => {
 
   window.history.pushState({}, '', withAppBase(pathname))
   currentPageKey.value = nextPageKey
+  catalogPage.value = 1
   menuOpen.value = false
   aboutMenuOpen.value = false
   makeupMenuOpen.value = false
@@ -252,6 +254,7 @@ const handleInternalNavigation = (event) => {
 
 window.addEventListener('popstate', () => {
   currentPageKey.value = getPageKey()
+  catalogPage.value = 1
   menuOpen.value = false
   window.scrollTo({ top: 0, behavior: 'smooth' })
 })
@@ -264,7 +267,17 @@ const products = [
 ]
 
 const makeupCategories = [
-  { slug: 'face', name: 'Face', zhName: '臉部', detail: 'Foundation · Concealer · Powder', zhDetail: '粉底 · 遮瑕 · 蜜粉', items: ['Foundation', 'Concealer', 'Powder', 'Blush', 'Highlighter'], zhItems: ['粉底', '遮瑕', '蜜粉／粉餅', '腮紅', '打亮'], itemSlugs: ['foundation', 'concealer', 'powder', 'blush', 'highlighter'], image: '/images/makeup/face.png' },
+  {
+    slug: 'face',
+    name: 'Face',
+    zhName: '臉部',
+    detail: 'Foundation · Concealer · Powder · Blush',
+    zhDetail: '粉底 · 遮瑕 · 蜜粉 · 腮紅',
+    items: ['Liquid Foundation', 'Serum Foundation', 'Cream Foundation', 'Stick Foundation', 'Cushion Foundation', 'Powder Foundation', 'Tinted Moisturizer', 'BB Cream', 'CC Cream', 'Liquid Concealer', 'Cream Concealer', 'Color Corrector', 'Pressed Powder', 'Loose Powder', 'Setting Powder', 'Powder Blush', 'Cream Blush', 'Liquid Blush', 'Highlighter', 'Contour'],
+    zhItems: ['粉底液', '精華粉底', '粉霜', '粉底棒', '氣墊粉餅', '粉餅', '潤色保濕霜', 'BB 霜', 'CC 霜', '遮瑕液', '遮瑕膏', '校色遮瑕', '定妝粉餅', '蜜粉', '定妝粉', '粉狀腮紅', '霜狀腮紅', '液態腮紅', '打亮', '修容'],
+    itemSlugs: ['foundation', 'serum-foundation', 'cream-foundation', 'stick-foundation', 'cushion-foundation', 'powder-foundation', 'tinted-moisturizer', 'bb-cream', 'cc-cream', 'liquid-concealer', 'cream-concealer', 'color-corrector', 'pressed-powder', 'loose-powder', 'setting-powder', 'powder-blush', 'cream-blush', 'liquid-blush', 'highlighter', 'contour'],
+    image: '/images/makeup/face.png',
+  },
   { slug: 'eyebrow', name: 'Eyebrow', zhName: '眉毛', detail: 'Pencil · Gel · Powder', zhDetail: '眉筆 · 眉膠 · 眉粉', items: ['Brow Pencil', 'Brow Powder', 'Brow Gel', 'Brow Pomade'], zhItems: ['眉筆', '眉粉', '染眉膏', '眉膠／眉膏'], itemSlugs: ['brow-pencil', 'brow-powder', 'brow-gel', 'brow-pomade'], image: '/images/makeup/eyebrow.png' },
   { slug: 'eyes', name: 'Eyes', zhName: '眼妝', detail: 'Eyeshadow · Liner · Mascara', zhDetail: '眼影 · 眼線 · 睫毛膏', items: ['Eyeshadow', 'Eyeliner', 'Mascara', 'Eye Primer'], zhItems: ['眼影', '眼線', '睫毛膏', '眼部打底'], itemSlugs: ['eyeshadow', 'eyeliner', 'mascara', 'eye-primer'], image: '/images/makeup/eyes.png' },
   { slug: 'lips', name: 'Lips', zhName: '唇彩', detail: 'Lipstick · Lip Gloss · Lip Care', zhDetail: '口紅 · 唇蜜 · 唇部保養', items: ['Lipstick', 'Lip Gloss', 'Lip Tint', 'Lip Balm'], zhItems: ['口紅', '唇蜜', '唇釉／唇露', '護唇膏'], itemSlugs: ['lipstick', 'lip-gloss', 'lip-tint', 'lip-balm'], image: '/images/makeup/lips.png' },
@@ -316,6 +329,26 @@ const visibleMakeupProducts = computed(() => {
 const currentCatalogItem = computed(() => visibleMakeupProducts.value.find(item => item.slug === currentMakeupProductSlug.value) || null)
 const recommendedMakeupProducts = computed(() => visibleMakeupProducts.value.filter(item => item.slug !== currentMakeupProductSlug.value).slice(0, 4))
 const currentCatalogImage = computed(() => currentCatalogItem.value?.gallery.includes(selectedCatalogImage.value) ? selectedCatalogImage.value : currentCatalogItem.value?.gallery[0] || '')
+const catalogPageSize = 8
+const catalogPageCount = computed(() => Math.max(1, Math.ceil(visibleMakeupProducts.value.length / catalogPageSize)))
+const paginatedMakeupProducts = computed(() => {
+  const start = (catalogPage.value - 1) * catalogPageSize
+  return visibleMakeupProducts.value.slice(start, start + catalogPageSize)
+})
+const catalogPagination = computed(() => {
+  const total = catalogPageCount.value
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1)
+  const page = catalogPage.value
+  if (page <= 4) return [1, 2, 3, 4, 5, 'ellipsis', total]
+  if (page >= total - 3) return [1, 'ellipsis', total - 4, total - 3, total - 2, total - 1, total]
+  return [1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', total]
+})
+const setCatalogPage = (page) => {
+  const nextPage = Math.min(Math.max(page, 1), catalogPageCount.value)
+  if (nextPage === catalogPage.value) return
+  catalogPage.value = nextPage
+  nextTick(() => document.querySelector('.makeup-product-listing-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
 
 const cartCount = computed(() => cartItems.value.reduce((total, item) => total + item.quantity, 0))
 const saveCart = () => localStorage.setItem('style-cart', JSON.stringify(cartItems.value))
@@ -1356,7 +1389,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
               <p>{{ language === 'zh' ? '從配方、色彩、質地到包裝，依照品牌需求提供完整客製開發。' : 'Customize formula, color, texture and packaging around your brand needs.' }}</p>
             </div>
             <div class="makeup-product-list makeup-shop-grid">
-              <article v-for="product in visibleMakeupProducts" :key="product.slug" class="makeup-shop-card">
+              <article v-for="product in paginatedMakeupProducts" :key="product.slug" class="makeup-shop-card">
                 <a class="makeup-shop-image" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`"><img :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" /></a>
                 <div class="makeup-shop-footer">
                   <a :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
@@ -1367,6 +1400,14 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                 </div>
               </article>
             </div>
+            <nav v-if="catalogPageCount > 1" class="makeup-catalog-pagination" :aria-label="language === 'zh' ? '商品分頁' : 'Product pagination'">
+              <button type="button" class="makeup-page-arrow" :disabled="catalogPage === 1" :aria-label="language === 'zh' ? '上一頁' : 'Previous page'" @click="setCatalogPage(catalogPage - 1)">←</button>
+              <template v-for="(page, index) in catalogPagination" :key="`${page}-${index}`">
+                <span v-if="page === 'ellipsis'" class="makeup-page-ellipsis" aria-hidden="true">…</span>
+                <button v-else type="button" :class="{ active: catalogPage === page }" :aria-current="catalogPage === page ? 'page' : undefined" :aria-label="language === 'zh' ? `第 ${page} 頁` : `Page ${page}`" @click="setCatalogPage(page)">{{ page }}</button>
+              </template>
+              <button type="button" class="makeup-page-arrow" :disabled="catalogPage === catalogPageCount" :aria-label="language === 'zh' ? '下一頁' : 'Next page'" @click="setCatalogPage(catalogPage + 1)">→</button>
+            </nav>
           </section>
 
           <section v-else class="makeup-product-detail" :class="{ 'is-foundation': currentCatalogItem.slug === 'foundation' }">
