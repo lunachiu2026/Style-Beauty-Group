@@ -1,5 +1,6 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import inquiryWizardHtml from '../prototypes/inquiry-wizard.html?raw'
 
 const appBasePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 const appPathname = () => {
@@ -31,10 +32,13 @@ const makeupInspirationFocus = ref(0)
 const makeupInsightFocus = ref(0)
 const language = ref(localStorage.getItem('style-language') || 'zh')
 const expandedMakeupCategory = ref('')
-const catalogPage = ref(1)
+const catalogVisibleCount = ref(8)
+const catalogLoadTrigger = ref(null)
 const cartOpen = ref(false)
 const cartItems = ref(JSON.parse(localStorage.getItem('style-cart') || '[]'))
 const contactMode = ref('email')
+const inquiryFrame = ref(null)
+const inquiryFrameHeight = ref(760)
 const beautyHubTab = ref('hub-solutions')
 const directCaptcha = ref(String(Math.floor(100000 + Math.random() * 900000)))
 const directCaptchaError = ref('')
@@ -224,7 +228,7 @@ const navigateTo = (url) => {
 
   window.history.pushState({}, '', withAppBase(pathname))
   currentPageKey.value = nextPageKey
-  catalogPage.value = 1
+  catalogVisibleCount.value = 8
   menuOpen.value = false
   aboutMenuOpen.value = false
   makeupMenuOpen.value = false
@@ -254,7 +258,7 @@ const handleInternalNavigation = (event) => {
 
 window.addEventListener('popstate', () => {
   currentPageKey.value = getPageKey()
-  catalogPage.value = 1
+  catalogVisibleCount.value = 8
   menuOpen.value = false
   window.scrollTo({ top: 0, behavior: 'smooth' })
 })
@@ -330,25 +334,17 @@ const currentCatalogItem = computed(() => visibleMakeupProducts.value.find(item 
 const recommendedMakeupProducts = computed(() => visibleMakeupProducts.value.filter(item => item.slug !== currentMakeupProductSlug.value).slice(0, 4))
 const currentCatalogImage = computed(() => currentCatalogItem.value?.gallery.includes(selectedCatalogImage.value) ? selectedCatalogImage.value : currentCatalogItem.value?.gallery[0] || '')
 const catalogPageSize = 8
-const catalogPageCount = computed(() => Math.max(1, Math.ceil(visibleMakeupProducts.value.length / catalogPageSize)))
-const paginatedMakeupProducts = computed(() => {
-  const start = (catalogPage.value - 1) * catalogPageSize
-  return visibleMakeupProducts.value.slice(start, start + catalogPageSize)
-})
-const catalogPagination = computed(() => {
-  const total = catalogPageCount.value
-  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1)
-  const page = catalogPage.value
-  if (page <= 4) return [1, 2, 3, 4, 5, 'ellipsis', total]
-  if (page >= total - 3) return [1, 'ellipsis', total - 4, total - 3, total - 2, total - 1, total]
-  return [1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', total]
-})
-const setCatalogPage = (page) => {
-  const nextPage = Math.min(Math.max(page, 1), catalogPageCount.value)
-  if (nextPage === catalogPage.value) return
-  catalogPage.value = nextPage
-  nextTick(() => document.querySelector('.makeup-product-listing-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+const paginatedMakeupProducts = computed(() => visibleMakeupProducts.value.slice(0, catalogVisibleCount.value))
+const hasMoreCatalogProducts = computed(() => catalogVisibleCount.value < visibleMakeupProducts.value.length)
+const loadMoreCatalogProducts = () => {
+  catalogVisibleCount.value = Math.min(catalogVisibleCount.value + catalogPageSize, visibleMakeupProducts.value.length)
 }
+let catalogObserver
+watch(catalogLoadTrigger, (element, previousElement) => {
+  if (!catalogObserver) return
+  if (previousElement) catalogObserver.unobserve(previousElement)
+  if (element) catalogObserver.observe(element)
+}, { flush: 'post' })
 
 const cartCount = computed(() => cartItems.value.reduce((total, item) => total + item.quantity, 0))
 const saveCart = () => localStorage.setItem('style-cart', JSON.stringify(cartItems.value))
@@ -616,10 +612,24 @@ const resumeSolutionsAutoplay = () => {
   solutionsPaused.value = false
   scheduleSolutionsCarousel()
 }
+const updateInquiryFrameHeight = (event) => {
+  if (event.source !== inquiryFrame.value?.contentWindow || event.data?.type !== 'style-beauty-inquiry-height') return
+  const height = Number(event.data.height)
+  if (Number.isFinite(height)) inquiryFrameHeight.value = Math.max(620, Math.min(height + 4, 1800))
+}
 onMounted(() => {
   scheduleSolutionsCarousel()
+  window.addEventListener('message', updateInquiryFrameHeight)
+  catalogObserver = new IntersectionObserver((entries) => {
+    if (entries.some(entry => entry.isIntersecting)) loadMoreCatalogProducts()
+  }, { rootMargin: '0px 0px 420px 0px' })
+  if (catalogLoadTrigger.value) catalogObserver.observe(catalogLoadTrigger.value)
 })
-onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
+onUnmounted(() => {
+  window.clearTimeout(solutionCarouselTimer)
+  catalogObserver?.disconnect()
+  window.removeEventListener('message', updateInquiryFrameHeight)
+})
 </script>
 
 <template>
@@ -1393,21 +1403,17 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                 <a class="makeup-shop-image" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`"><img :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" /></a>
                 <div class="makeup-shop-footer">
                   <a :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
-                    <small>{{ language === 'zh' ? '點擊查看商品詳細' : 'VIEW PRODUCT DETAILS' }}</small>
                     <strong>{{ language === 'zh' ? product.zhName : product.name }}</strong>
+                    <span>{{ language === 'zh' ? '了解更多' : 'READ MORE' }} <i aria-hidden="true">→</i></span>
                   </a>
-                  <button type="button" :aria-label="language === 'zh' ? `將${product.zhName}加入購物車` : `Add ${product.name} to cart`" @click="addToCart(product)">＋</button>
                 </div>
               </article>
             </div>
-            <nav v-if="catalogPageCount > 1" class="makeup-catalog-pagination" :aria-label="language === 'zh' ? '商品分頁' : 'Product pagination'">
-              <button type="button" class="makeup-page-arrow" :disabled="catalogPage === 1" :aria-label="language === 'zh' ? '上一頁' : 'Previous page'" @click="setCatalogPage(catalogPage - 1)">←</button>
-              <template v-for="(page, index) in catalogPagination" :key="`${page}-${index}`">
-                <span v-if="page === 'ellipsis'" class="makeup-page-ellipsis" aria-hidden="true">…</span>
-                <button v-else type="button" :class="{ active: catalogPage === page }" :aria-current="catalogPage === page ? 'page' : undefined" :aria-label="language === 'zh' ? `第 ${page} 頁` : `Page ${page}`" @click="setCatalogPage(page)">{{ page }}</button>
-              </template>
-              <button type="button" class="makeup-page-arrow" :disabled="catalogPage === catalogPageCount" :aria-label="language === 'zh' ? '下一頁' : 'Next page'" @click="setCatalogPage(catalogPage + 1)">→</button>
-            </nav>
+            <div v-if="hasMoreCatalogProducts" ref="catalogLoadTrigger" class="makeup-infinite-loader" role="status" aria-live="polite">
+              <span aria-hidden="true"></span>
+              <small>{{ language === 'zh' ? '繼續向下滑動，自動載入更多商品' : 'Keep scrolling to load more products' }}</small>
+            </div>
+            <p v-else class="makeup-catalog-end">{{ language === 'zh' ? `已顯示全部 ${visibleMakeupProducts.length} 件商品` : `All ${visibleMakeupProducts.length} products displayed` }}</p>
           </section>
 
           <section v-else class="makeup-product-detail" :class="{ 'is-foundation': currentCatalogItem.slug === 'foundation' }">
@@ -1508,69 +1514,8 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             </form>
           </section>
 
-          <section v-else key="inquiry" class="guided-form-shell" role="tabpanel" aria-labelledby="guided-form-title">
-        <div class="guided-form-progress">
-          <div class="guided-form-progress-copy">
-            <span>{{ language === 'zh' ? `第 ${contactStep} 步，共 4 步` : `Step ${contactStep} of 4` }}</span>
-            <span>{{ contactStep * 25 }}%</span>
-          </div>
-          <div class="guided-form-progress-track"><span :style="{ width: `${contactStep * 25}%` }"></span></div>
-        </div>
-
-        <form class="guided-form" @submit.prevent>
-          <fieldset v-if="contactStep === 1">
-            <legend id="guided-form-title">{{ language === 'zh' ? '你需要哪一種合作服務？' : 'What kind of partnership do you need?' }}</legend>
-            <p>{{ language === 'zh' ? '不確定也沒關係，我們會協助你找到合適的方式。' : "It’s okay if you’re unsure—we’ll help you find the right approach." }}</p>
-            <div class="guided-choice-grid guided-choice-grid--services">
-              <label v-for="option in contactOptions.services" :key="option[0]" class="guided-choice" :class="{ selected: contactForm.service === option[0] }">
-                <input v-model="contactForm.service" type="radio" name="service" :value="option[0]" />
-                <span class="guided-choice-mark" aria-hidden="true"></span>
-                <strong>{{ option[1] }}</strong>
-                <small>{{ option[2] }}</small>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset v-else-if="contactStep === 2">
-            <legend id="guided-form-title">{{ language === 'zh' ? '你想開發哪些產品？' : 'What products would you like to develop?' }}</legend>
-            <p>{{ language === 'zh' ? '可複選所有相關品類。' : 'Select all categories that apply.' }}</p>
-            <div class="guided-choice-grid">
-              <label v-for="option in contactOptions.categories" :key="option[0]" class="guided-choice guided-choice--compact" :class="{ selected: contactForm.categories.includes(option[0]) }">
-                <input v-model="contactForm.categories" type="checkbox" :value="option[0]" />
-                <span class="guided-choice-mark" aria-hidden="true"></span>
-                <strong>{{ option[1] }}</strong>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset v-else-if="contactStep === 3">
-            <legend id="guided-form-title">{{ language === 'zh' ? '告訴我們你的專案規劃' : 'Tell us about your project' }}</legend>
-            <p>{{ language === 'zh' ? '初步資訊即可，團隊將與你一起補齊細節。' : 'An initial outline is enough—our team can help shape the details.' }}</p>
-            <div class="guided-field-grid">
-              <label><span>{{ language === 'zh' ? '預計上市時程 *' : 'Target timeline *' }}</span><select v-model="contactForm.timeline" required><option value="" disabled>{{ language === 'zh' ? '請選擇' : 'Select one' }}</option><option v-for="option in contactOptions.timelines" :key="option[0]" :value="option[0]">{{ option[1] }}</option></select></label>
-              <label><span>{{ language === 'zh' ? '預估首批數量' : 'Estimated first order' }}</span><input v-model.trim="contactForm.quantity" type="text" :placeholder="language === 'zh' ? '例如：3,000 件' : 'e.g. 3,000 units'" /></label>
-              <label class="guided-field-wide"><span>{{ language === 'zh' ? '專案需求與產品構想 *' : 'Project needs and product idea *' }}</span><textarea v-model.trim="contactForm.message" rows="5" required :placeholder="language === 'zh' ? '請簡單描述產品形式、訴求、目標市場或已有的參考方向…' : 'Briefly describe the format, claims, target market or references…'"></textarea></label>
-            </div>
-          </fieldset>
-
-          <fieldset v-else>
-            <legend id="guided-form-title">{{ language === 'zh' ? '最後，留下聯絡方式' : 'Finally, how can we reach you?' }}</legend>
-            <p>{{ language === 'zh' ? '完成後會建立一封已整理好需求的詢問郵件。' : 'We’ll prepare an email with your project details ready to send.' }}</p>
-            <div class="guided-field-grid">
-              <label><span>{{ language === 'zh' ? '姓名 *' : 'Name *' }}</span><input v-model.trim="contactForm.name" type="text" autocomplete="name" required /></label>
-              <label><span>{{ language === 'zh' ? '公司／品牌名稱' : 'Company / brand' }}</span><input v-model.trim="contactForm.company" type="text" autocomplete="organization" /></label>
-              <label><span>Email *</span><input v-model.trim="contactForm.email" type="email" autocomplete="email" required /></label>
-              <label><span>{{ language === 'zh' ? '電話' : 'Phone' }}</span><input v-model.trim="contactForm.phone" type="tel" autocomplete="tel" /></label>
-            </div>
-          </fieldset>
-
-          <div class="guided-form-actions">
-            <button v-if="contactStep > 1" class="guided-back" type="button" @click="contactStep--">← {{ language === 'zh' ? '上一步' : 'Back' }}</button>
-            <span v-else></span>
-            <button v-if="contactStep < 4" class="button button-primary" type="button" :disabled="!contactStepValid" @click="contactStep++">{{ language === 'zh' ? '下一步' : 'Continue' }} <span aria-hidden="true">→</span></button>
-            <a v-else class="button button-primary" :class="{ disabled: !contactStepValid }" :href="contactStepValid ? contactEmailHref : undefined" :aria-disabled="!contactStepValid">{{ language === 'zh' ? '建立詢問郵件' : 'Create inquiry email' }} <span aria-hidden="true">↗</span></a>
-          </div>
-        </form>
+          <section v-else key="inquiry" class="contact-inquiry-embed" role="tabpanel" :aria-label="language === 'zh' ? '產品詢問引導表單' : 'Guided product inquiry form'">
+            <iframe ref="inquiryFrame" class="contact-inquiry-frame" title="OEM / ODM Product Inquiry" :srcdoc="inquiryWizardHtml" :style="{ height: `${inquiryFrameHeight}px` }"></iframe>
           </section>
         </Transition>
       </section>

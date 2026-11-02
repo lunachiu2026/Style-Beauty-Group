@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OEM / ODM Product Inquiry</title>
+  <style>
+    :root { --wine:#ad606b; --wine-dark:#914a56; --line:#e5ddda; --paper:#fffdfa; --ink:#251c1d; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f8f5f3; color:var(--ink); }
+    button, input, textarea { font:inherit; }
+    .wizard { max-width:900px; min-height:400px; margin:24px auto; padding:30px 32px 28px; border:1px solid var(--line); background:var(--paper); font-family:Georgia,'Times New Roman',serif; }
+    .progress-label { display:flex; justify-content:space-between; margin-bottom:7px; color:var(--wine); font:11px Arial,sans-serif; }
+    .track { height:3px; background:#e9e6e5; }
+    .bar { width:16.67%; height:100%; background:var(--wine); transition:width .2s; }
+    h1 { margin:23px 0 7px; font-size:24px; font-weight:400; }
+    h1 .accent { color:var(--wine); }
+    .description { margin:0 0 20px; color:#8b817e; font:12px/1.6 Georgia,serif; }
+    .category-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .category { min-height:74px; display:flex; align-items:center; gap:13px; padding:19px 13px; border:1px solid var(--line); background:white; cursor:pointer; text-align:left; font-size:17px; }
+    .category:last-child { grid-column:1/-1; }
+    .category.selected, .product-card.selected { border-color:var(--wine); background:#fbf1f0; }
+    .dot { width:13px; height:13px; display:inline-block; flex-shrink:0; border:1px solid #cfa7a9; border-radius:50%; }
+    .selected .dot, .check input:checked + .dot { border:4px solid #b56d77; }
+    .product-section { margin-bottom:7px; padding:10px 12px 13px; border:1px solid var(--line); border-radius:8px; background:white; }
+    .section-heading { margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #eee7e4; color:var(--wine); font-size:18px; }
+    .checks { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+    .check { min-height:22px; display:flex; align-items:center; gap:7px; cursor:pointer; font-size:12px; white-space:nowrap; }
+    .check input { position:absolute; width:1px; height:1px; opacity:0; }
+    .check input:focus-visible + .dot { outline:2px solid var(--wine); outline-offset:3px; }
+    .format-checks { grid-template-columns:repeat(5,minmax(0,1fr)); row-gap:24px; margin:23px 9px 31px; }
+    .divider { height:3px; margin:26px 0 37px; background:#e9e7e6; }
+    .card-heading { margin:0 0 15px; border:0; }
+    .product-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .product-card { min-height:101px; padding:17px 19px; border:1px solid var(--line); border-radius:8px; background:white; cursor:pointer; text-align:left; font-size:14px; }
+    .section-heading small { margin-left:6px; color:#8b817e; font:11px Arial,sans-serif; }
+    .skincare-block { margin-top:28px; }
+    .skincare-block:first-of-type { margin-top:23px; }
+    .skincare-block .format-checks { margin-bottom:8px; }
+    .skincare-main-cards { margin-bottom:34px; }
+    .benefit-checks { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:28px; }
+    .not-sure-cards { margin-top:24px; }
+    .not-sure-cards .product-card { min-height:118px; font-size:17px; }
+    .quantity-cards { grid-template-columns:repeat(5,minmax(0,1fr)); }
+    .quantity-cards .product-card { min-height:88px; padding:14px; text-align:center; font-size:13px; }
+    .target-market { margin-top:35px; padding-top:29px; border-top:3px solid #e9e7e6; }
+    .target-market h2 { margin:0 0 7px; color:var(--wine); font-size:20px; font-weight:400; }
+    .target-market p { margin:0 0 14px; color:#8b817e; font:12px/1.5 Arial,sans-serif; }
+    .target-market select, .target-market input { width:100%; min-height:50px; padding:12px 13px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--ink); background:#fff; font:13px Arial,sans-serif; }
+    .target-market input { margin-top:12px; }
+    .target-market select:focus, .target-market input:focus { border-color:var(--wine); box-shadow:0 0 0 3px #ad606b1f; }
+    .contact-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 16px; margin-top:27px; }
+    .contact-fields label { display:flex; flex-direction:column; gap:8px; color:#5f4f4d; font:11px Arial,sans-serif; }
+    .contact-fields input, .contact-fields select, .contact-fields textarea { width:100%; min-height:48px; padding:12px 13px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--ink); background:#fff; font:13px Arial,sans-serif; }
+    .contact-fields textarea { min-height:110px; resize:vertical; }
+    .contact-fields input:focus, .contact-fields select:focus, .contact-fields textarea:focus { border-color:var(--wine); box-shadow:0 0 0 3px #ad606b1f; }
+    .contact-fields .field-wide { grid-column:1/-1; }
+    textarea { width:100%; min-height:145px; padding:14px; border:1px solid var(--line); background:white; resize:vertical; font:13px/1.6 Arial,sans-serif; }
+    .summary { padding:17px; overflow-wrap:anywhere; border:1px solid var(--line); background:#fff; font:13px/1.9 Arial,sans-serif; }
+    .summary strong { color:#874956; }
+    .footer { display:flex; align-items:flex-start; justify-content:space-between; gap:15px; margin-top:27px; }
+    .back { padding:10px 16px; border:1px solid #e6d4cf; border-radius:24px; color:#8c7774; background:white; cursor:pointer; font:11px Arial,sans-serif; }
+    .continue { display:flex; align-items:center; gap:23px; padding:8px 9px 8px 20px; border:0; border-radius:25px; color:white; background:var(--wine); box-shadow:2px 4px 6px #ddc6c8; cursor:pointer; font:bold 11px Arial,sans-serif; }
+    .arrow { width:23px; height:23px; display:grid; place-items:center; border-radius:50%; color:var(--wine); background:white; font-size:15px; }
+    .error { min-height:16px; margin-top:12px; color:#b05461; text-align:right; font:11px Arial,sans-serif; }
+    .actions-right { display:flex; flex-direction:column; align-items:flex-end; }
+    button:focus-visible { outline:2px solid #723c46; outline-offset:3px; }
+    @media (max-width:700px) {
+      .wizard { margin:0; padding:20px 15px; }
+      .checks, .format-checks { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .product-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .benefit-checks { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .quantity-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .contact-fields { grid-template-columns:1fr; }
+    }
+    @media (max-width:420px) {
+      .checks, .format-checks { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .category { gap:8px; font-size:14px; }
+      h1 { font-size:21px; }
+      .product-card { min-height:83px; padding:12px; font-size:12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" aria-label="OEM ODM inquiry wizard">
+    <div class="progress-label"><span id="stepText">Step 1 of 6</span><span id="percent">16.67%</span></div>
+    <div class="track"><div class="bar" id="progressBar"></div></div>
+    <div id="content"></div>
+    <div class="footer" id="footer">
+      <button type="button" class="back" id="backBtn">← Back</button>
+      <div class="actions-right">
+        <button type="button" class="continue" id="nextBtn"><span id="nextLabel">Continue</span><span class="arrow">➜</span></button>
+        <div class="error" id="error" role="alert"></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const makeup = [
+        ['Lips', ['Lipstick','Lip Gloss','Lip Liner','Lip Oil','Lip Care']],
+        ['Eyebrow', ['Eyebrow pen','Brow Gel','Brow palette']],
+        ['Eyes', ['Eye Liners','Eyeshadow','Mascara','Primer','Lashes Serum']],
+        ['Face / Base', ['Foundations','Primer','Color Corrector','BB Cream','CC Cream']],
+        ['Cheek', ['Blush','Concealer','Highlighter','Bronzer','Color Palette']],
+        ['Setting & Powder', ['Setting Spray','Setting Powder','Loose Powder','Pressed Powder']],
+      ]
+      const sunTypes = ['Lotion','Cream','Gel','Essence','Milk','Stick','Mist','Spray','Powder']
+      const sunCards = ['Tinted Sunscreen','Tone-Up Sunscreen','Kids’ Sunscreen','Mineral Sunscreen','Soothing Gel / Moisturizer']
+      const skincareMensCare = ['Cleanser','Deodorants','Essence','Toner','Moisturizer','Lotion','Face Cream','All-in-One Skincare','Shaving Product']
+      const skincareCategories = ['Cleansers','Toner & Mist','Moisturizers','Masks','Serums & Essence','Ampoule']
+      const skincareBodyCare = ['Lotion','Cream','Body Wash','Scrub','Hand Cream','Makeup Remover']
+      const notSureBenefits = ['Hydration & Moisture','Oil-Control','Anti-Aging','Brightening','Sensitive Skin','Sun Protection','Long Wear & Transfer Proof','Multifunction']
+      const orderQuantities = ['6,000 pcs','7,000 pcs','8,000 pcs','9,000 pcs','10,000 pcs+']
+      const targetMarkets = ['Taiwan','Japan','South Korea','China','Hong Kong','Singapore','Malaysia','Thailand','Vietnam','Indonesia','Philippines','India','United Arab Emirates','Saudi Arabia','United States','Canada','United Kingdom','France','Germany','Italy','Spain','Australia','New Zealand','Other']
+      const state = { step:1, category:'Makeup', selected:{ Makeup:new Set(), 'Sun Care':new Set(), Skincare:new Set() }, idea:'', quantity:'', targetMarket:'', targetMarketOther:'', contact:{ name:'', company:'', email:'', country:'', whatsapp:'', messageType:'', website:'', notes:'' }, notSure:{ benefits:new Set(), product:'' } }
+      const $ = id => document.getElementById(id)
+      const esc = value => String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      const progress = { 1:'16.67', 2:'33.33', 3:'50', 4:'66.67', 5:'83.33', 6:'100' }
+      const currentSelections = () => state.selected[state.category] || new Set()
+      const choice = (key, label) => `<label class="check"><input type="checkbox" data-product="${esc(key)}" ${currentSelections().has(key) ? 'checked' : ''}><span class="dot"></span><span>${esc(label)}</span></label>`
+      const sections = data => data.map(([name,items]) => `<section class="product-section"><div class="section-heading">${esc(name)}</div><div class="checks">${items.map((item,index) => choice(`${name}::${index}::${item}`,item)).join('')}</div></section>`).join('')
+      const formatCards = (title, formats, cardTitle, cards) => `<h1>Product Type <span class="accent">${esc(title)}</span></h1><div class="checks format-checks">${formats.map((item,index) => choice(`Product Type::${index}::${item}`,item)).join('')}</div><div class="divider"></div><div class="section-heading card-heading">${esc(cardTitle)}</div><div class="product-cards">${cards.map((item,index) => { const key = `${cardTitle}::${index}::${item}`; return `<button type="button" class="product-card ${currentSelections().has(key) ? 'selected' : ''}" data-card="${esc(key)}" aria-pressed="${currentSelections().has(key)}">${esc(item)}</button>` }).join('')}</div>`
+      const cards = (section, items, extraClass = '', singleSelect = false) => `<div class="product-cards ${extraClass}" ${singleSelect ? 'role="radiogroup"' : ''}>${items.map((item,index) => { const key = `${section}::${index}::${item}`; const selected = currentSelections().has(key); return `<button type="button" class="product-card ${selected ? 'selected' : ''}" data-card="${esc(key)}" data-card-group="${esc(section)}" data-single="${singleSelect}" ${singleSelect ? `role="radio" aria-checked="${selected}"` : `aria-pressed="${selected}"`}>${esc(item)}</button>` }).join('')}</div>`
+      const notSureBenefitChoice = item => `<label class="check"><input type="checkbox" data-benefit="${esc(item)}" ${state.notSure.benefits.has(item) ? 'checked' : ''}><span class="dot"></span><span>${esc(item)}</span></label>`
+      const singleButtons = (items, value, attribute, extraClass = '') => `<div class="product-cards not-sure-cards ${extraClass}" role="radiogroup">${items.map(item => `<button type="button" class="product-card ${value === item ? 'selected' : ''}" ${attribute}="${esc(item)}" role="radio" aria-checked="${value === item}">${esc(item)}</button>`).join('')}</div>`
+
+      function skincareStep() {
+        return `<h1>Product Type <span class="accent">Skincare</span></h1>
+          <section class="skincare-block">
+            <div class="section-heading">Men’s Care <small>(Multiple selection)</small></div>
+            <div class="checks format-checks">${skincareMensCare.map((item,index) => choice(`Men’s Care::${index}::${item}`,item)).join('')}</div>
+          </section>
+          <div class="divider"></div>
+          <div class="section-heading card-heading">Skincare</div>
+          ${cards('Skincare', skincareCategories, 'skincare-main-cards', true)}
+          <section class="skincare-block">
+            <div class="section-heading">Body Care <small>(Multiple selection)</small></div>
+            <div class="checks format-checks">${skincareBodyCare.map((item,index) => choice(`Body Care::${index}::${item}`,item)).join('')}</div>
+          </section>`
+      }
+
+      function step2() {
+        if (state.category === 'Not sure yet') return `<h1><span class="accent">Not Sure Yet</span></h1><p class="description">What benefits are you looking for? Select all that apply.</p><div class="checks benefit-checks">${notSureBenefits.map(notSureBenefitChoice).join('')}</div>`
+        if (state.category === 'Makeup') return `<h1>Product Type <span class="accent">Makeup</span></h1>${sections(makeup)}`
+        if (state.category === 'Sun Care') return formatCards('Sun Care', sunTypes, 'Face / Base', sunCards)
+        return skincareStep()
+      }
+
+      function notSureProductStep() {
+        return `<h1>What Product are you looking for?</h1><p class="description">Choose the product category closest to your idea.</p>${singleButtons(['Makeup','Skincare'], state.notSure.product, 'data-not-sure-product')}`
+      }
+
+      function quantityStep() {
+        return `<h1>Estimated Order Quantity</h1><p class="description">Choose an estimated quantity for your first order.</p>${singleButtons(orderQuantities, state.quantity, 'data-quantity', 'quantity-cards')}<section class="target-market"><h2>Target Market</h2><p>Select the primary country or market for this product.</p><select data-target-market><option value="">Select a country</option>${targetMarkets.map(item => `<option value="${esc(item)}" ${state.targetMarket === item ? 'selected' : ''}>${esc(item)}</option>`).join('')}</select>${state.targetMarket === 'Other' ? `<input type="text" data-target-market-other value="${esc(state.targetMarketOther)}" placeholder="Enter another country or market">` : ''}</section>`
+      }
+
+      function contactDetailsStep() {
+        const contact = state.contact
+        return `<h1>Tell us about yourself</h1><p class="description">Leave your details so our team can follow up on your project.</p><div class="contact-fields">
+          <label><span>Name *</span><input type="text" autocomplete="name" data-contact="name" value="${esc(contact.name)}" placeholder="Your name"></label>
+          <label><span>Company *</span><input type="text" autocomplete="organization" data-contact="company" value="${esc(contact.company)}" placeholder="Company or brand name"></label>
+          <label><span>Email *</span><input type="email" autocomplete="email" data-contact="email" value="${esc(contact.email)}" placeholder="name@company.com"></label>
+          <label><span>Country *</span><input type="text" autocomplete="country-name" data-contact="country" value="${esc(contact.country)}" placeholder="Your country"></label>
+          <label><span>WhatsApp</span><input type="tel" autocomplete="tel" data-contact="whatsapp" value="${esc(contact.whatsapp)}" placeholder="Country code and phone number"></label>
+          <label><span>Message Type</span><select data-contact="messageType"><option value="">Select one</option><option value="Email" ${contact.messageType === 'Email' ? 'selected' : ''}>Email</option><option value="WhatsApp" ${contact.messageType === 'WhatsApp' ? 'selected' : ''}>WhatsApp</option><option value="Phone" ${contact.messageType === 'Phone' ? 'selected' : ''}>Phone</option></select></label>
+          <label class="field-wide"><span>Website / SNS</span><input type="url" data-contact="website" value="${esc(contact.website)}" placeholder="Website, Instagram, Facebook, or other SNS"></label>
+          <label class="field-wide"><span>Additional Notes</span><textarea data-contact="notes" placeholder="Add any information that may help us understand your project...">${esc(contact.notes)}</textarea></label>
+        </div>`
+      }
+
+      function summary() {
+        const targetMarket = state.targetMarket === 'Other' ? state.targetMarketOther : state.targetMarket
+        if (state.category === 'Not sure yet') return `<h1>Project Submitted</h1><p class="description">Please review your initial product preferences.</p><div class="summary"><strong>Benefits</strong><div>${esc([...state.notSure.benefits].join(', ') || 'Not specified')}</div><br><strong>Product</strong><div>${esc(state.notSure.product || 'Not specified')}</div><br><strong>Estimated order quantity</strong><div>${esc(state.quantity || 'Not specified')}</div><br><strong>Target Market</strong><div>${esc(targetMarket || 'Not specified')}</div><br><strong>Name</strong><div>${esc(state.contact.name)}</div><br><strong>Company</strong><div>${esc(state.contact.company)}</div><br><strong>Email</strong><div>${esc(state.contact.email)}</div><br><strong>Country</strong><div>${esc(state.contact.country)}</div><br><strong>WhatsApp</strong><div>${esc(state.contact.whatsapp || 'Not specified')}</div><br><strong>Message Type</strong><div>${esc(state.contact.messageType || 'Not specified')}</div><br><strong>Website / SNS</strong><div>${esc(state.contact.website || 'Not specified')}</div><br><strong>Additional Notes</strong><div>${esc(state.contact.notes || 'Not specified')}</div></div>`
+        const names = [...currentSelections()].map(key => key.split('::')[2])
+        return `<h1>Project Submitted</h1><p class="description">Please review your product development requirements.</p><div class="summary"><strong>Partnership</strong><div>${esc(state.category)}</div><br><strong>Products</strong><div>${esc(names.join(', ') || 'Not specified')}</div><br><strong>Other ideas</strong><div>${esc(state.idea || 'Not specified')}</div><br><strong>Estimated order quantity</strong><div>${esc(state.quantity || 'Not specified')}</div><br><strong>Target Market</strong><div>${esc(targetMarket || 'Not specified')}</div><br><strong>Name</strong><div>${esc(state.contact.name)}</div><br><strong>Company</strong><div>${esc(state.contact.company)}</div><br><strong>Email</strong><div>${esc(state.contact.email)}</div><br><strong>Country</strong><div>${esc(state.contact.country)}</div><br><strong>WhatsApp</strong><div>${esc(state.contact.whatsapp || 'Not specified')}</div><br><strong>Message Type</strong><div>${esc(state.contact.messageType || 'Not specified')}</div><br><strong>Website / SNS</strong><div>${esc(state.contact.website || 'Not specified')}</div><br><strong>Additional Notes</strong><div>${esc(state.contact.notes || 'Not specified')}</div></div>`
+      }
+
+      function render() {
+        const currentProgress = progress[state.step]
+        $('stepText').textContent = `Step ${state.step} of 6`
+        $('percent').textContent = currentProgress + '%'
+        $('progressBar').style.width = currentProgress + '%'
+        $('backBtn').style.visibility = state.step === 1 ? 'hidden' : 'visible'
+        $('nextLabel').textContent = state.step === 5 ? 'SUBMIT MY PROJECT' : state.step === 6 ? 'Finish' : 'Continue'
+        $('error').textContent = ''
+        let html = ''
+        if (state.step === 1) {
+          html = `<h1>What kind of partnership do you need?</h1><p class="description">It’s okay if you’re unsure — we’ll help you find the right approach.</p><div class="category-grid">${['Makeup','Sun Care','Skincare','Other','Not sure yet'].map(category => `<button type="button" class="category ${state.category === category ? 'selected' : ''}" data-category="${esc(category)}" aria-pressed="${state.category === category}"><span class="dot"></span>${esc(category)}</button>`).join('')}</div>`
+        } else if (state.step === 2) html = step2()
+        else if (state.category === 'Not sure yet' && state.step === 3) html = notSureProductStep()
+        else if (state.step === 4) html = quantityStep()
+        else if (state.step === 5) html = contactDetailsStep()
+        else if (state.step === 3) html = `<h1>Have other ideas in mind?</h1><p class="description">Tell us about your product ideas and requirements.</p><textarea id="idea" placeholder="Tell us more about your ideas..."></textarea>`
+        else if (state.step === 6) html = summary()
+        else html = `<h1>Contact Details</h1><p class="description">Please provide your contact information.</p>`
+        $('content').innerHTML = html
+        const idea = $('idea')
+        if (idea) { idea.value = state.idea; idea.addEventListener('input', () => state.idea = idea.value) }
+        document.querySelectorAll('[data-category]').forEach(button => button.addEventListener('click', () => { state.category = button.dataset.category; render() }))
+        document.querySelectorAll('[data-product]').forEach(input => input.addEventListener('change', () => { input.checked ? currentSelections().add(input.dataset.product) : currentSelections().delete(input.dataset.product); $('error').textContent = '' }))
+        document.querySelectorAll('[data-benefit]').forEach(input => input.addEventListener('change', () => { input.checked ? state.notSure.benefits.add(input.dataset.benefit) : state.notSure.benefits.delete(input.dataset.benefit); $('error').textContent = '' }))
+        document.querySelectorAll('[data-not-sure-product]').forEach(button => button.addEventListener('click', () => { state.notSure.product = button.dataset.notSureProduct; render() }))
+        document.querySelectorAll('[data-quantity]').forEach(button => button.addEventListener('click', () => { state.quantity = button.dataset.quantity; render() }))
+        document.querySelectorAll('[data-target-market]').forEach(select => select.addEventListener('change', () => { state.targetMarket = select.value; render() }))
+        document.querySelectorAll('[data-target-market-other]').forEach(input => input.addEventListener('input', () => { state.targetMarketOther = input.value; $('error').textContent = '' }))
+        document.querySelectorAll('[data-contact]').forEach(input => input.addEventListener('input', () => { state.contact[input.dataset.contact] = input.value; $('error').textContent = '' }))
+        document.querySelectorAll('[data-card]').forEach(button => button.addEventListener('click', () => {
+          const key = button.dataset.card
+          if (button.dataset.single === 'true') {
+            const prefix = `${button.dataset.cardGroup}::`
+            ;[...currentSelections()].filter(item => item.startsWith(prefix)).forEach(item => currentSelections().delete(item))
+            currentSelections().add(key)
+          } else currentSelections().has(key) ? currentSelections().delete(key) : currentSelections().add(key)
+          render()
+        }))
+        requestAnimationFrame(() => parent.postMessage({ type:'style-beauty-inquiry-height', height:document.documentElement.scrollHeight }, '*'))
+      }
+
+      $('nextBtn').addEventListener('click', () => {
+        if (state.step === 1) state.step = state.category === 'Other' ? 3 : 2
+        else if (state.step === 2) {
+          if (state.category === 'Not sure yet') {
+            if (state.notSure.benefits.size === 0) { $('error').textContent = 'Select at least one benefit.'; return }
+          } else if (currentSelections().size === 0) { $('error').textContent = 'You must provide at least one product.'; return }
+          state.step = 3
+        } else if (state.category === 'Not sure yet' && state.step === 3) {
+          if (!state.notSure.product) { $('error').textContent = 'Choose Makeup or Skincare.'; return }
+          state.step = 4
+        } else if (state.step === 4) {
+          if (!state.quantity) { $('error').textContent = 'Choose an estimated order quantity.'; return }
+          if (!state.targetMarket || state.targetMarket === 'Other' && !state.targetMarketOther.trim()) { $('error').textContent = 'Choose or enter a target market.'; return }
+          state.step = 5
+        } else if (state.step === 5) {
+          const contact = state.contact
+          if (!contact.name.trim() || !contact.company.trim() || !/\S+@\S+\.\S+/.test(contact.email) || !contact.country.trim()) { $('error').textContent = 'Complete Name, Company, Email, and Country.'; return }
+          state.step = 6
+        }
+        else if (state.step === 6) {
+          const targetMarket = state.targetMarket === 'Other' ? state.targetMarketOther : state.targetMarket
+          const result = state.category === 'Not sure yet' ? { category:state.category, benefits:[...state.notSure.benefits], product:state.notSure.product, quantity:state.quantity, targetMarket, contact:state.contact } : { category:state.category, products:[...currentSelections()].map(key => key.split('::')[2]), ideas:state.idea, quantity:state.quantity, targetMarket, contact:state.contact }
+          console.log('Preview only — not submitted:', result)
+          $('error').textContent = 'Preview only: no data was sent.'
+          return
+        } else if (state.step === 3) state.step = 4
+        else state.step = Math.min(6, state.step + 1)
+        render()
+      })
+      $('backBtn').addEventListener('click', () => {
+        if (state.step === 6) state.step = 5
+        else if (state.step === 5) state.step = 4
+        else if (state.category === 'Not sure yet' && state.step === 3) state.step = 2
+        else if (state.step === 4) state.step = 3
+        else if (state.step === 3) state.step = state.category === 'Other' ? 1 : 2
+        else state.step = Math.max(1, state.step - 1)
+        render()
+      })
+      render()
+    })()
+  </script>
+</body>
+</html>
