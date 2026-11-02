@@ -1014,7 +1014,7 @@ img { display: block; width: 100%; }
 .makeup-shop-image { aspect-ratio: 1 / 1.06; display: block; overflow: hidden; border-radius: 9px 9px 0 0; background: #f5f2ef; }
 .makeup-shop-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .55s ease; }
 .makeup-shop-card:hover .makeup-shop-image img { transform: scale(1.035); }
-.makeup-shop-footer { position: relative; z-index: 1; min-height: 230px; flex: 1; margin: -46px 14px 0; display: block; border-radius: 9px 9px 0 0; color: #20242d; background: #fff; box-shadow: 0 10px 24px #4e302b0a; }
+.makeup-shop-footer { position: relative; z-index: 1; min-height: 230px; flex: 1; margin: -46px 0 0; display: block; border-radius: 9px 9px 0 0; color: #20242d; background: #fff; box-shadow: 0 10px 24px #4e302b0a; }
 .makeup-shop-footer > a { min-width: 0; height: 100%; min-height: 230px; display: flex; flex-direction: column; padding: 32px 25px 26px; }
 .makeup-shop-footer strong { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(20px, 1.7vw, 28px); font-weight: 400; line-height: 1.38; }
 .makeup-shop-footer p { display: -webkit-box; margin: 13px 0 0; overflow: hidden; color: #756b68; font-size: 11px; line-height: 1.75; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
@@ -1344,7 +1344,7 @@ img { display: block; width: 100%; }
   .makeup-product-info p { min-height: 0; font-size: 9px; }
   .makeup-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
   .makeup-shop-image { height: auto; aspect-ratio: 1; }
-  .makeup-shop-footer { min-height: 210px; margin: -30px 8px 0; }
+  .makeup-shop-footer { min-height: 210px; margin: -30px 0 0; }
   .makeup-shop-footer > a { min-height: 210px; padding: 24px 17px 20px; }
   .makeup-shop-footer strong { font-size: 19px; }
   .makeup-shop-footer p { margin-top: 9px; font-size: 10px; line-height: 1.65; -webkit-line-clamp: 3; }
@@ -1608,7 +1608,7 @@ img { display: block; width: 100%; }
   .section-heading > .text-link { margin: 0; }
   .footer-main { grid-template-columns: 1fr; }
   .makeup-shop-grid { grid-template-columns: 1fr; gap: 28px; }
-  .makeup-shop-footer { min-height: 270px; margin: -52px 14px 0; }
+  .makeup-shop-footer { min-height: 270px; margin: -52px 0 0; }
   .makeup-shop-footer > a { min-height: 270px; padding: 40px 30px 30px; }
   .makeup-shop-footer strong { font-size: 27px; line-height: 1.38; }
   .makeup-shop-footer p { margin-top: 15px; font-size: 13px; line-height: 1.75; -webkit-line-clamp: 4; }
