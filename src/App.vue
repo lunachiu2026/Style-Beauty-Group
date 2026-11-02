@@ -333,6 +333,9 @@ const visibleMakeupProducts = computed(() => {
 const currentCatalogItem = computed(() => visibleMakeupProducts.value.find(item => item.slug === currentMakeupProductSlug.value) || null)
 const recommendedMakeupProducts = computed(() => visibleMakeupProducts.value.filter(item => item.slug !== currentMakeupProductSlug.value).slice(0, 4))
 const currentCatalogImage = computed(() => currentCatalogItem.value?.gallery.includes(selectedCatalogImage.value) ? selectedCatalogImage.value : currentCatalogItem.value?.gallery[0] || '')
+watch(currentMakeupProductSlug, () => {
+  recommendationsOpen.value = false
+})
 const catalogPageSize = 8
 const paginatedMakeupProducts = computed(() => visibleMakeupProducts.value.slice(0, catalogVisibleCount.value))
 const hasMoreCatalogProducts = computed(() => catalogVisibleCount.value < visibleMakeupProducts.value.length)
@@ -1440,7 +1443,7 @@ onUnmounted(() => {
             </div>
           </section>
 
-          <aside v-if="currentCatalogItem?.slug === 'foundation'" class="makeup-recommendation-drawer" :class="{ 'is-open': recommendationsOpen }">
+          <aside v-if="currentCatalogItem" class="makeup-recommendation-drawer" :class="{ 'is-open': recommendationsOpen }">
             <button class="makeup-recommendation-toggle" type="button" :aria-expanded="recommendationsOpen" :aria-label="language === 'zh' ? `${recommendationsOpen ? '收合' : '展開'}推薦產品` : `${recommendationsOpen ? 'Collapse' : 'Expand'} recommended products`" @click="recommendationsOpen = !recommendationsOpen">
               <span>{{ language === 'zh' ? '推薦產品' : 'RECOMMENDED' }}</span>
             </button>
@@ -1448,7 +1451,7 @@ onUnmounted(() => {
             <div class="makeup-recommendation-drawer-list" :inert="!recommendationsOpen" :aria-hidden="!recommendationsOpen">
               <a v-for="product in recommendedMakeupProducts" :key="product.slug" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
                 <img :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" />
-                <span><small>{{ language === 'zh' ? '臉部彩妝' : 'FACE MAKEUP' }}</small><strong>{{ language === 'zh' ? product.zhName : product.name }}</strong></span><i aria-hidden="true">→</i>
+                <span><small>{{ language === 'zh' ? `${currentMakeupCategory.zhName}彩妝` : `${currentMakeupCategory.name.toUpperCase()} MAKEUP` }}</small><strong>{{ language === 'zh' ? product.zhName : product.name }}</strong></span><i aria-hidden="true">→</i>
               </a>
             </div>
           </aside>
