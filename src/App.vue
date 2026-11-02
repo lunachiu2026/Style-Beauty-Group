@@ -1404,6 +1404,7 @@ onUnmounted(() => {
                 <div class="makeup-shop-footer">
                   <a :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
                     <strong>{{ language === 'zh' ? product.zhName : product.name }}</strong>
+                    <p>{{ language === 'zh' ? product.zhDescription : product.description }}</p>
                     <span>{{ language === 'zh' ? '了解更多' : 'READ MORE' }} <i aria-hidden="true">→</i></span>
                   </a>
                 </div>

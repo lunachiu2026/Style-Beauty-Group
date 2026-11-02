@@ -996,7 +996,7 @@ img { display: block; width: 100%; }
 .makeup-product-listing-heading { display: flex; align-items: end; justify-content: space-between; gap: 35px; margin-bottom: 28px; }
 .makeup-product-listing-heading .eyebrow { margin-bottom: 7px; }
 .makeup-product-listing-heading h2 { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(30px, 3.2vw, 44px); font-weight: 400; }
-.makeup-product-listing-heading > p { max-width: 420px; margin: 0 0 4px; color: #756864; font-size: 11px; line-height: 1.7; }
+.makeup-product-listing-heading > p { max-width: 480px; margin: 0 0 5px; color: #756864; font-size: 12px; line-height: 1.8; }
 .makeup-product-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 16px; }
 .makeup-product-list.is-single { grid-template-columns: minmax(0, 520px); }
 .makeup-product-item { min-width: 0; border: 1px solid #e9ddd6; background: #fff; }
@@ -1010,14 +1010,15 @@ img { display: block; width: 100%; }
 .makeup-product-info .text-link { font-size: 8px; }
 .makeup-shop-listing { background: #fbf8f2; }
 .makeup-shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 18px; }
-.makeup-shop-card { min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 9px; background: transparent; }
+.makeup-shop-card { min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 9px; background: transparent; }
 .makeup-shop-image { aspect-ratio: 1 / 1.06; display: block; overflow: hidden; border-radius: 9px 9px 0 0; background: #f5f2ef; }
 .makeup-shop-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .55s ease; }
 .makeup-shop-card:hover .makeup-shop-image img { transform: scale(1.035); }
-.makeup-shop-footer { position: relative; z-index: 1; min-height: 250px; margin: -54px 14px 0; display: block; border-radius: 9px 9px 0 0; color: #20242d; background: #fff; box-shadow: 0 10px 24px #4e302b0a; }
-.makeup-shop-footer > a { min-width: 0; height: 100%; min-height: 250px; display: flex; flex-direction: column; padding: 36px 26px 30px; }
+.makeup-shop-footer { position: relative; z-index: 1; min-height: 230px; flex: 1; margin: -46px 14px 0; display: block; border-radius: 9px 9px 0 0; color: #20242d; background: #fff; box-shadow: 0 10px 24px #4e302b0a; }
+.makeup-shop-footer > a { min-width: 0; height: 100%; min-height: 230px; display: flex; flex-direction: column; padding: 32px 25px 26px; }
 .makeup-shop-footer strong { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(20px, 1.7vw, 28px); font-weight: 400; line-height: 1.38; }
-.makeup-shop-footer span { margin-top: auto; padding-top: 36px; color: #343434; font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .4px; }
+.makeup-shop-footer p { display: -webkit-box; margin: 13px 0 0; overflow: hidden; color: #756b68; font-size: 11px; line-height: 1.75; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+.makeup-shop-footer span { margin-top: auto; padding-top: 24px; color: #343434; font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .4px; }
 .makeup-shop-footer span i { margin-left: 5px; font-size: 18px; font-style: normal; font-weight: 400; }
 .makeup-shop-footer > a:hover span, .makeup-shop-footer > a:focus-visible span { color: #a9585b; }
 .makeup-infinite-loader { min-height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-top: 28px; color: #9a6a6e; }
@@ -1343,10 +1344,11 @@ img { display: block; width: 100%; }
   .makeup-product-info p { min-height: 0; font-size: 9px; }
   .makeup-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
   .makeup-shop-image { height: auto; aspect-ratio: 1; }
-  .makeup-shop-footer { min-height: 190px; margin: -34px 8px 0; }
-  .makeup-shop-footer > a { min-height: 190px; padding: 25px 18px 22px; }
+  .makeup-shop-footer { min-height: 210px; margin: -30px 8px 0; }
+  .makeup-shop-footer > a { min-height: 210px; padding: 24px 17px 20px; }
   .makeup-shop-footer strong { font-size: 19px; }
-  .makeup-shop-footer span { padding-top: 28px; font-size: 10px; }
+  .makeup-shop-footer p { margin-top: 9px; font-size: 10px; line-height: 1.65; -webkit-line-clamp: 3; }
+  .makeup-shop-footer span { padding-top: 20px; font-size: 10px; }
   .makeup-infinite-loader { min-height: 76px; margin-top: 22px; }
   .makeup-category-layout.is-product-detail { min-height: 0; }
   .makeup-product-detail { grid-template-columns: 1fr; gap: 24px; min-height: 0; padding: 0 18px 24px; }
@@ -1606,10 +1608,11 @@ img { display: block; width: 100%; }
   .section-heading > .text-link { margin: 0; }
   .footer-main { grid-template-columns: 1fr; }
   .makeup-shop-grid { grid-template-columns: 1fr; gap: 28px; }
-  .makeup-shop-footer { min-height: 300px; margin: -58px 14px 0; }
-  .makeup-shop-footer > a { min-height: 300px; padding: 46px 32px 34px; }
-  .makeup-shop-footer strong { font-size: 29px; line-height: 1.42; }
-  .makeup-shop-footer span { padding-top: 38px; font-size: 14px; }
+  .makeup-shop-footer { min-height: 270px; margin: -52px 14px 0; }
+  .makeup-shop-footer > a { min-height: 270px; padding: 40px 30px 30px; }
+  .makeup-shop-footer strong { font-size: 27px; line-height: 1.38; }
+  .makeup-shop-footer p { margin-top: 15px; font-size: 13px; line-height: 1.75; -webkit-line-clamp: 4; }
+  .makeup-shop-footer span { padding-top: 30px; font-size: 14px; }
 }
 
 @media (max-width: 760px) {
