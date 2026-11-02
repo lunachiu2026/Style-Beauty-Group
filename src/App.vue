@@ -1,6 +1,15 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
+const appBasePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+const appPathname = () => {
+  const pathname = window.location.pathname
+  if (appBasePath && pathname.startsWith(appBasePath)) return pathname.slice(appBasePath.length) || '/'
+  return pathname
+}
+const withAppBase = (pathname) => `${appBasePath}${pathname === '/' ? '/' : pathname}`
+const assetPath = (path) => path?.startsWith('/') ? `${appBasePath}${path}` : path
+
 const menuOpen = ref(false)
 const aboutMenuOpen = ref(false)
 const makeupMenuOpen = ref(false)
@@ -159,11 +168,11 @@ const pages = {
     features: ['Email: style-diana@stylebeautygroup.com', 'Tel: +886-4-23370043', 'OEM, ODM and private label inquiries welcome'],
   },
 }
-const getPageKey = () => window.location.pathname.split('/').filter(Boolean).at(-1) || 'home'
+const getPageKey = () => appPathname().split('/').filter(Boolean).at(-1) || 'home'
 const currentPageKey = ref(getPageKey())
 const currentPage = computed(() => {
   currentPageKey.value
-  return window.location.pathname.startsWith('/makeup') ? pages.makeup : pages[currentPageKey.value]
+  return appPathname().startsWith('/makeup') ? pages.makeup : pages[currentPageKey.value]
 })
 const pageTranslations = {
   about: ['關於 Style Beauty Group', '讓你的產品想法成真。', '從第一個構想到準備上市的產品，成為值得信賴的美妝製造夥伴。', '不只是製造', '我們整合配方、產品開發、包裝與製造流程，與品牌並肩合作，將清晰的願景化為消費者喜愛的產品。', ['累積超過 40 年美妝專業', '客製化 OEM 與 ODM 開發', '台灣製造，重視品質']],
@@ -207,11 +216,12 @@ const setLanguage = (event) => {
 document.documentElement.lang = language.value === 'zh' ? 'zh-Hant' : 'en'
 
 const navigateTo = (url) => {
-  const nextPageKey = url.pathname.split('/').filter(Boolean).at(-1) || 'home'
-  const isMakeupPath = url.pathname === '/makeup' || url.pathname.startsWith('/makeup/')
+  const pathname = appBasePath && url.pathname.startsWith(appBasePath) ? url.pathname.slice(appBasePath.length) || '/' : url.pathname
+  const nextPageKey = pathname.split('/').filter(Boolean).at(-1) || 'home'
+  const isMakeupPath = pathname === '/makeup' || pathname.startsWith('/makeup/')
   if (nextPageKey !== 'home' && !pages[nextPageKey] && !isMakeupPath) return
 
-  window.history.pushState({}, '', url.pathname)
+  window.history.pushState({}, '', withAppBase(pathname))
   currentPageKey.value = nextPageKey
   menuOpen.value = false
   aboutMenuOpen.value = false
@@ -225,14 +235,15 @@ const handleInternalNavigation = (event) => {
 
   const url = new URL(link.href, window.location.href)
   if (url.origin !== window.location.origin || url.hash) return
-  if (url.pathname === window.location.pathname) {
+  const pathname = appBasePath && url.pathname.startsWith(appBasePath) ? url.pathname.slice(appBasePath.length) || '/' : url.pathname
+  if (pathname === appPathname()) {
     event.preventDefault()
     window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
 
-  const pageKey = url.pathname.split('/').filter(Boolean).at(-1) || 'home'
-  const isMakeupPath = url.pathname === '/makeup' || url.pathname.startsWith('/makeup/')
+  const pageKey = pathname.split('/').filter(Boolean).at(-1) || 'home'
+  const isMakeupPath = pathname === '/makeup' || pathname.startsWith('/makeup/')
   if (pageKey !== 'home' && !pages[pageKey] && !isMakeupPath) return
 
   event.preventDefault()
@@ -261,13 +272,13 @@ const makeupCategories = [
 
 const currentMakeupCategory = computed(() => {
   currentPageKey.value
-  const segments = window.location.pathname.split('/').filter(Boolean)
+  const segments = appPathname().split('/').filter(Boolean)
   if (segments[0] !== 'makeup' || !segments[1]) return null
   return makeupCategories.find(category => category.slug === segments[1]) || null
 })
 const currentMakeupProductSlug = computed(() => {
   currentPageKey.value
-  return window.location.pathname.split('/').filter(Boolean)[2] || ''
+  return appPathname().split('/').filter(Boolean)[2] || ''
 })
 const visibleMakeupProducts = computed(() => {
   if (!currentMakeupCategory.value) return []
@@ -657,7 +668,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
           <div class="cart-drawer-header"><div><p class="eyebrow">{{ language === 'zh' ? '商品詢價清單' : 'PRODUCT INQUIRY LIST' }}</p><h2>{{ language === 'zh' ? '購物車' : 'Your Cart' }}</h2></div><button type="button" :aria-label="language === 'zh' ? '關閉購物車' : 'Close cart'" @click="cartOpen = false">×</button></div>
           <div v-if="cartItems.length" class="cart-items">
             <article v-for="item in cartItems" :key="item.id" class="cart-item">
-              <img :src="item.image" :alt="language === 'zh' ? item.zhName : item.name" />
+              <img :src="assetPath(item.image)" :alt="language === 'zh' ? item.zhName : item.name" />
               <div><strong>{{ language === 'zh' ? item.zhName : item.name }}</strong><span>{{ language === 'zh' ? `數量：${item.quantity}` : `Quantity: ${item.quantity}` }}</span><button type="button" @click="removeFromCart(item.id)">{{ language === 'zh' ? '移除' : 'Remove' }}</button></div>
             </article>
           </div>
@@ -729,7 +740,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
         </div>
         <div class="product-grid">
           <a v-for="product in products" :key="product.name" class="product-feature" :href="product.href">
-            <img class="product-feature-image" :src="product.image" :alt="language === 'zh' ? product.zhName : product.name" loading="lazy" />
+            <img class="product-feature-image" :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" loading="lazy" />
             <div class="product-feature-shade"></div>
             <div class="product-feature-copy">
               <p class="eyebrow">{{ copy.productsEyebrow }}</p>
@@ -837,7 +848,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                   </header>
                   <div class="beauty-hub-blog-layout">
                     <article class="beauty-hub-blog-feature">
-                      <img :src="activeBeautyHubSection.items[0].image" alt="" loading="lazy" />
+                      <img :src="assetPath(activeBeautyHubSection.items[0].image)" alt="" loading="lazy" />
                       <div class="beauty-hub-blog-feature-copy">
                         <p class="beauty-hub-blog-meta"><span>{{ language === 'zh' ? activeBeautyHubSection.items[0].zhCategory : activeBeautyHubSection.items[0].category }}</span><time>{{ activeBeautyHubSection.items[0].date }}</time></p>
                         <h2>{{ language === 'zh' ? activeBeautyHubSection.items[0].zhName : activeBeautyHubSection.items[0].name }}</h2>
@@ -847,7 +858,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                     </article>
                     <div class="beauty-hub-blog-list">
                       <article v-for="item in activeBeautyHubSection.items.slice(1)" :key="item.name">
-                        <img :src="item.image" alt="" loading="lazy" />
+                        <img :src="assetPath(item.image)" alt="" loading="lazy" />
                         <div><p class="beauty-hub-blog-meta"><span>{{ language === 'zh' ? item.zhCategory : item.category }}</span><time>{{ item.date }}</time></p><h3>{{ language === 'zh' ? item.zhName : item.name }}</h3><p>{{ language === 'zh' ? item.zhDetail : item.detail }}</p><span class="beauty-hub-blog-read">{{ language === 'zh' ? '閱讀文章' : 'READ ARTICLE' }} <i aria-hidden="true">→</i></span></div>
                       </article>
                     </div>
@@ -862,7 +873,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                   </div>
                   <div class="beauty-hub-card-strip">
                     <article v-for="item in activeBeautyHubSection.items" :key="item.name" class="beauty-hub-card">
-                      <img :src="item.image" alt="" loading="lazy" />
+                      <img :src="assetPath(item.image)" alt="" loading="lazy" />
                       <h3>{{ language === 'zh' ? item.zhName : item.name }}</h3>
                       <p>{{ language === 'zh' ? item.zhDetail : item.detail }}</p>
                     </article>
@@ -884,7 +895,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
                 <div class="beauty-hub-process-line">
                   <article v-for="step in makeupProcess" :key="step.number">
                     <span>{{ step.number }}</span>
-                    <img :src="step.image" alt="" loading="lazy" />
+                    <img :src="assetPath(step.image)" alt="" loading="lazy" />
                     <h3>{{ language === 'zh' ? step.zhName : step.name }}</h3>
                   </article>
                 </div>
@@ -1192,7 +1203,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             </div>
             <div class="makeup-category-grid">
               <a v-for="category in makeupCategories" :key="category.name" class="makeup-category-card" href="#makeup-solutions">
-                <img :src="category.image" :alt="language === 'zh' ? category.zhName : category.name" loading="lazy" />
+                <img :src="assetPath(category.image)" :alt="language === 'zh' ? category.zhName : category.name" loading="lazy" />
                 <span class="makeup-category-copy"><strong>{{ language === 'zh' ? category.zhName : category.name }}</strong><small>{{ language === 'zh' ? category.zhDetail : category.detail }}</small></span>
                 <span class="makeup-category-arrow" aria-hidden="true">＋</span>
               </a>
@@ -1213,7 +1224,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
           </div>
         </div>
         <div class="makeup-coverflow" aria-live="polite">
-          <img class="makeup-coverflow-bg" :src="makeupTextureImages[makeupSolutionPage % makeupTextureImages.length]" alt="" aria-hidden="true" />
+          <img class="makeup-coverflow-bg" :src="assetPath(makeupTextureImages[makeupSolutionPage % makeupTextureImages.length])" alt="" aria-hidden="true" />
           <div class="makeup-coverflow-shade"></div>
           <button
             v-for="(item, index) in solutions"
@@ -1226,7 +1237,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             :aria-current="index === makeupSolutionPage ? 'true' : undefined"
             @click="makeupSolutionPage = index"
           >
-            <img :src="makeupTextureImages[index % makeupTextureImages.length]" :alt="language === 'zh' ? `${item.zhName}彩妝質地` : `${item.name} cosmetic texture`" />
+            <img :src="assetPath(makeupTextureImages[index % makeupTextureImages.length])" :alt="language === 'zh' ? `${item.zhName}彩妝質地` : `${item.name} cosmetic texture`" />
             <span class="makeup-coverflow-card-copy">
               <small>{{ language === 'zh' ? item.zhCategory : item.category }}</small>
               <strong>{{ language === 'zh' ? item.zhName : item.name }}</strong>
@@ -1250,7 +1261,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
         </div>
         <div class="makeup-feature-slider">
           <a v-for="(item, index) in makeupInspirationItems" :key="item.name" class="makeup-feature-card" :class="{ active: index === makeupInspirationFocus }" href="/video" @mouseenter="makeupInspirationFocus = index" @focus="makeupInspirationFocus = index">
-            <img :src="makeupEditorialImages[(index + 1) % makeupEditorialImages.length]" :alt="language === 'zh' ? item.zhName : item.name" loading="lazy" />
+            <img :src="assetPath(makeupEditorialImages[(index + 1) % makeupEditorialImages.length])" :alt="language === 'zh' ? item.zhName : item.name" loading="lazy" />
             <span class="makeup-feature-shade"></span>
             <span class="makeup-feature-copy"><small>{{ language === 'zh' ? item.zhCategory : item.category }}</small><strong>{{ language === 'zh' ? item.zhName : item.name }}</strong><i aria-hidden="true">↗</i></span>
           </a>
@@ -1270,7 +1281,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
         </div>
         <div class="makeup-feature-slider makeup-feature-slider--light">
           <a v-for="(item, index) in makeupInsights" :key="item.name" class="makeup-feature-card" :class="{ active: index === makeupInsightFocus }" href="/video" @mouseenter="makeupInsightFocus = index" @focus="makeupInsightFocus = index">
-            <img :src="makeupTextureImages[(index + 2) % makeupTextureImages.length]" :alt="language === 'zh' ? item.zhName : item.name" loading="lazy" />
+            <img :src="assetPath(makeupTextureImages[(index + 2) % makeupTextureImages.length])" :alt="language === 'zh' ? item.zhName : item.name" loading="lazy" />
             <span class="makeup-feature-shade"></span>
             <span class="makeup-feature-copy"><small>{{ language === 'zh' ? item.zhCategory : item.category }}</small><strong>{{ language === 'zh' ? item.zhName : item.name }}</strong><i aria-hidden="true">↗</i></span>
           </a>
@@ -1329,7 +1340,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
 
         <div class="makeup-category-content">
           <section v-if="!currentCatalogItem" class="makeup-category-hero">
-            <img :src="currentMakeupCategory.image" :alt="language === 'zh' ? currentMakeupCategory.zhName : currentMakeupCategory.name" />
+            <img :src="assetPath(currentMakeupCategory.image)" :alt="language === 'zh' ? currentMakeupCategory.zhName : currentMakeupCategory.name" />
             <span class="makeup-category-hero-shade"></span>
             <div class="makeup-category-hero-copy">
               <nav class="makeup-breadcrumb" aria-label="Breadcrumb"><a href="/">{{ language === 'zh' ? '首頁' : 'Home' }}</a><span>›</span><a href="/makeup">{{ language === 'zh' ? '彩妝' : 'Makeup' }}</a><span>›</span><span>{{ language === 'zh' ? currentMakeupCategory.zhName : currentMakeupCategory.name }}</span></nav>
@@ -1346,7 +1357,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             </div>
             <div class="makeup-product-list makeup-shop-grid">
               <article v-for="product in visibleMakeupProducts" :key="product.slug" class="makeup-shop-card">
-                <a class="makeup-shop-image" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`"><img :src="product.image" :alt="language === 'zh' ? product.zhName : product.name" /></a>
+                <a class="makeup-shop-image" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`"><img :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" /></a>
                 <div class="makeup-shop-footer">
                   <a :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
                     <small>{{ language === 'zh' ? '點擊查看商品詳細' : 'VIEW PRODUCT DETAILS' }}</small>
@@ -1362,10 +1373,10 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             <div class="makeup-product-gallery">
               <div class="makeup-product-thumbnails" role="group" :aria-label="language === 'zh' ? '商品圖片' : 'Product images'">
                 <button v-for="(image, index) in currentCatalogItem.gallery" :key="image" type="button" :class="{ active: currentCatalogImage === image }" :aria-label="language === 'zh' ? `查看商品圖片 ${index + 1}` : `View product image ${index + 1}`" :aria-pressed="currentCatalogImage === image" @click="selectedCatalogImage = image">
-                  <img :src="image" :alt="language === 'zh' ? `${currentCatalogItem.zhName}商品圖片 ${index + 1}` : `${currentCatalogItem.name} product image ${index + 1}`" />
+                  <img :src="assetPath(image)" :alt="language === 'zh' ? `${currentCatalogItem.zhName}商品圖片 ${index + 1}` : `${currentCatalogItem.name} product image ${index + 1}`" />
                 </button>
               </div>
-              <div class="makeup-product-detail-image"><img :src="currentCatalogImage" :alt="language === 'zh' ? currentCatalogItem.zhName : currentCatalogItem.name" /></div>
+              <div class="makeup-product-detail-image"><img :src="assetPath(currentCatalogImage)" :alt="language === 'zh' ? currentCatalogItem.zhName : currentCatalogItem.name" /></div>
             </div>
             <div class="makeup-product-detail-copy">
               <p class="makeup-detail-category">{{ language === 'zh' ? `${currentMakeupCategory.zhName}・${currentMakeupCategory.slug === 'eyebrow' && currentCatalogItem.slug === 'brow-pencil' ? '鉛筆' : currentMakeupCategory.zhName}` : `${currentMakeupCategory.name} · ${currentCatalogItem.name}` }}</p>
@@ -1388,7 +1399,7 @@ onUnmounted(() => window.clearTimeout(solutionCarouselTimer))
             <div class="makeup-recommendation-drawer-head" :inert="!recommendationsOpen" :aria-hidden="!recommendationsOpen"><p class="eyebrow">YOU MAY ALSO LIKE</p><h2>{{ language === 'zh' ? '推薦產品' : 'Recommended Products' }}</h2><button type="button" :aria-label="language === 'zh' ? '關閉推薦產品' : 'Close recommendations'" @click="recommendationsOpen = false">×</button></div>
             <div class="makeup-recommendation-drawer-list" :inert="!recommendationsOpen" :aria-hidden="!recommendationsOpen">
               <a v-for="product in recommendedMakeupProducts" :key="product.slug" :href="`/makeup/${currentMakeupCategory.slug}/${product.slug}`">
-                <img :src="product.image" :alt="language === 'zh' ? product.zhName : product.name" />
+                <img :src="assetPath(product.image)" :alt="language === 'zh' ? product.zhName : product.name" />
                 <span><small>{{ language === 'zh' ? '臉部彩妝' : 'FACE MAKEUP' }}</small><strong>{{ language === 'zh' ? product.zhName : product.name }}</strong></span><i aria-hidden="true">→</i>
               </a>
             </div>
